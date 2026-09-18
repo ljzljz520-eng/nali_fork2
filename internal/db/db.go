@@ -6,11 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/zu1k/nali/pkg/cdn"
 	"github.com/zu1k/nali/pkg/dbif"
-	"github.com/zu1k/nali/pkg/geoip"
-	"github.com/zu1k/nali/pkg/qqwry"
-	"github.com/zu1k/nali/pkg/zxipv6wry"
 )
 
 func GetDB(typ dbif.QueryType) (db dbif.DB) {
@@ -23,46 +19,39 @@ func GetDB(typ dbif.QueryType) (db dbif.DB) {
 		lang = "zh-CN"
 	}
 
-	var err error
 	switch typ {
 	case dbif.TypeIPv4:
 		selected := viper.GetString("selected.ipv4")
-		if selected != "" {
-			db = getDbByName(selected).get()
-			break
+		if selected == "" {
+			if lang == "zh-CN" {
+				selected = "qqwry"
+			} else {
+				selected = "geoip"
+			}
 		}
-
-		if lang == "zh-CN" {
-			db, err = qqwry.NewQQwry(getDbByName("qqwry").File)
-		} else {
-			db, err = geoip.NewGeoIP(getDbByName("geoip").File)
-		}
+		db = getDbByName(selected).get()
 	case dbif.TypeIPv6:
 		selected := viper.GetString("selected.ipv6")
-		if selected != "" {
-			db = getDbByName(selected).get()
-			break
+		if selected == "" {
+			if lang == "zh-CN" {
+				selected = "zxipv6wry"
+			} else {
+				selected = "geoip"
+			}
 		}
-
-		if lang == "zh-CN" {
-			db, err = zxipv6wry.NewZXwry(getDbByName("zxipv6wry").File)
-		} else {
-			db, err = geoip.NewGeoIP(getDbByName("geoip").File)
-		}
+		db = getDbByName(selected).get()
 	case dbif.TypeDomain:
 		selected := viper.GetString("selected.cdn")
-		if selected != "" {
-			db = getDbByName(selected).get()
-			break
+		if selected == "" {
+			selected = "cdn"
 		}
-
-		db, err = cdn.NewCDN(getDbByName("cdn").File)
+		db = getDbByName(selected).get()
 	default:
 		panic("Query type not supported!")
 	}
 
-	if err != nil || db == nil {
-		log.Fatalln("Database init failed:", err)
+	if db == nil {
+		log.Fatalln("Database init failed")
 	}
 
 	dbTypeCache[typ] = db

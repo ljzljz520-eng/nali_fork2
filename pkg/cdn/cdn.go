@@ -71,7 +71,11 @@ func NewCDN(filePath string) (*CDN, error) {
 		if re.MaybeRegexp(k) {
 			rex, err := regexp.Compile(k)
 			if err != nil {
-				log.Printf("[CDN Database] entry %s not a valid regexp", k)
+				// Skip invalid patterns: keeping a nil *regexp.Regexp would
+				// panic on the first query. The update pipeline rejects such
+				// databases before they reach this point.
+				log.Printf("[CDN Database] entry %s not a valid regexp, skipped", k)
+				continue
 			}
 			cdnReMap = append(cdnReMap, CDNReTuple{
 				Regexp:    rex,

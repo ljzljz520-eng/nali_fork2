@@ -31,6 +31,14 @@ func (d *DB) get() (db dbif.DB) {
 		return db
 	}
 
+	// First-run bootstrap: constructors used to download unverified bytes
+	// straight into the data dir when the file was missing. Fetch through
+	// the same validate-or-quarantine pipeline as `nali update` instead.
+	if err := ensureDBFile(d); err != nil {
+		log.Fatalf("数据库 %s 尚未就绪（候选版本未通过内容策略，已进入隔离区），请先执行 `nali db report %s` 审阅证据，再用 `nali db activate %s` 激活",
+			d.Name, d.Name, d.Name)
+	}
+
 	filePath := d.File
 
 	var err error

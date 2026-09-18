@@ -10,18 +10,29 @@ import (
 	"github.com/zu1k/nali/pkg/common"
 )
 
-func Download(filePath ...string) (data []byte, err error) {
+// FetchData downloads and decompresses the ZX IPv6 database into memory and
+// performs the structural format check. It never touches the active database
+// file; callers must validate content before activation.
+func FetchData() (data []byte, err error) {
 	data, err = getData()
 	if err != nil {
-		log.Printf("ZX IPv6数据库下载失败，请手动下载解压后保存到本地: %s \n", filePath)
+		log.Println("ZX IPv6数据库下载失败，请手动下载解压后保存到本地")
 		log.Println("下载链接： https://ip.zxinc.org/ip.7z")
 		return
 	}
 
 	if !CheckFile(data) {
-		log.Printf("ZX IPv6数据库下载出错，请手动下载解压后保存到本地: %s \n", filePath)
+		log.Println("ZX IPv6数据库下载出错，请手动下载解压后保存到本地")
 		log.Println("下载链接： https://ip.zxinc.org/ip.7z")
 		return nil, errors.New("数据库下载内容出错")
+	}
+	return
+}
+
+func Download(filePath ...string) (data []byte, err error) {
+	data, err = FetchData()
+	if err != nil {
+		return
 	}
 
 	if len(filePath) == 1 {
